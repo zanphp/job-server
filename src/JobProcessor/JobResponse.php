@@ -43,8 +43,7 @@ class JobResponse extends \swoole_http_response
         if ($this->job->status === Job::INIT) {
             // TODO mb_strpos($html, "出错了") !== false
             if ($this->code !== 200 || mb_strpos($html, "出错了") !== false) {
-                $ex = new JobException($html, $this->code);
-                $this->jobManager->error($this->job, $ex);
+                $this->jobManager->error($this->job, $html);
             } else {
                 $this->jobManager->done($this->job);
             }

@@ -6,7 +6,7 @@ namespace Zan\Framework\Components\JobServer\Monitor;
 use Zan\Framework\Foundation\Contract\Async;
 use Zan\Framework\Network\Server\Timer\Timer;
 
-class DnsLookup implements Async
+class Dns implements Async
 {
     public $callback;
 

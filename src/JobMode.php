@@ -10,17 +10,10 @@ final class JobMode
     const MQ_WORKER = "mqworker";
 
     private static $modes = null;
-    
-    /**
-     * @return array
-     */
-    public static function get()
-    {
-        if (self::$modes === null) {
-            self::init();
-        }
 
-        return static::$modes;
+    public static function isCli()
+    {
+        return JobMode::isOn(JobMode::CLI) && $_SERVER["argc"] >= 2;
     }
 
     public static function isOn($mode = null)
@@ -32,9 +25,13 @@ final class JobMode
         }
     }
 
-    public static function isCli()
+    private static function contains($mode)
     {
-        return JobMode::isOn(JobMode::CLI) && $_SERVER["argc"] >= 2;
+        if (self::$modes === null) {
+            self::init();
+        }
+
+        return in_array($mode, static::$modes, true);
     }
 
     private static function init()
@@ -45,10 +42,5 @@ final class JobMode
         } else {
             self::$modes = [];
         }
-    }
-
-    private static function contains($mode)
-    {
-        return in_array($mode, static::get(), true);
     }
 }

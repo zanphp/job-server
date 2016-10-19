@@ -65,16 +65,17 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
     <?php
     return [
         "cronJob1" => [
-            "uri" => "job/task/task0",
-            "cron"  => "* * * * * *",
-        ],
-        "cronJob2" => [
-            "uri" => "job/task/taks1",    // 必填, 对应http请求request uri
+            "uri" => "job/task/taks1",     // 必填, 对应http请求request uri
             "cron"  => "* * * * * *",       // 必填, 精确到秒的cron表达式 (秒 分 时 天 月 周)
+            "timeout"=> 60000,              // 选填, 默认60000, 执行超时
             "method" => "GET",              // 选填, 默认GET, 对应http请求
             "header" => [ "x-foo: bar", ],  // 选填, 默认[], 对应http请求
             "body" => "",                   // 选填, 默认"", 对应http请求
             "strict" => false,              // 选填, 默认false, 是否启用严格模式, 严格模式会对服务重启等原因错过的任务进行补偿执行
+        ],
+        "cronJob2" => [
+            "uri" => "job/task/task0",
+            "cron"  => "* * * * * *",
         ],
         "cronJob3" => [
             "uri" => "job/task/taks2?kdt_id=1", // 传递GET参数
@@ -98,20 +99,20 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
     <?php
     return [
         "mqJob1" => [
-            "uri" => "job/task/taks2",
-            "topic" => "someTopic",
-            "channel" => "ch1",
-        ],
-        "mqJob2" => [
             "uri" => "job/task/consume",    // 必填, 对应http请求request uri
-            "topic" => "taskTopic",         // nsq topic
-            "channel" => "ch2",             // nsq channel
+            "topic" => "taskTopic",         // 必填, nsq topic
+            "channel" => "ch2",             // 必填, nsq channel
+            "timeout"=> 60000,              // 选填, 默认60000, 执行超时
             "coroutine_num" => 1,           // 选填, 默认1, 单个worker任务处理并发数量, 根据业务需要调整
             "method" => "GET",              // 选填, 默认GET, 对应http请求
             "header" => [ "x-foo: bar", ],  // 选填, 默认[], 对应http请求
             "body" => "",                   // 选填, 默认"", 对应http请求
         ],
-
+        "mqJob2" => [
+            "uri" => "job/task/taks2",
+            "topic" => "someTopic",
+            "channel" => "ch1",
+        ],
     ];
     ~~~
 
@@ -159,11 +160,12 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
     加入启动参数, 且配置了ZAN_JOB_MODE环境变量配置了cli, 默认启动cliworker
 
 ./jobWorker [-H -X -d] uri
+-t --timeout    60000
 -H --header     header 支持多个
 -X --request    request method
 -d --data       request body
 
 e.g.
 ./jobWorker --help
-./jobWorker -H "Content-type: application/x-www-form-urlencoded" -X POST --data "foo=bar" job/task/product?kdt_id=1
-./jobWorker -H "Content-type: Content-type: application/json" -X POST --data '{"foo": "bar"}' job/task/product?kdt_id=2
+./jobWorker -H "Content-type: application/x-www-form-urlencoded" -X POST --data "foo=bar" -t 10000 job/task/product?kdt_id=1
+./jobWorker -H "Content-type: Content-type: application/json" -X POST --data '{"foo": "bar"}' -t 5000 job/task/product?kdt_id=2

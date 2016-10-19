@@ -6,6 +6,7 @@ namespace Zan\Framework\Components\JobServer\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Job;
+use Zan\Framework\Foundation\Core\Config;
 use Zan\Framework\Network\Http\RequestHandler;
 
 class HttpJobProcessor implements JobProcessor
@@ -25,8 +26,10 @@ class HttpJobProcessor implements JobProcessor
         $this->body = $body;
     }
 
-    public function process(JobManager $jobManager, Job $job)
+    public function process(JobManager $jobManager, Job $job, $timeout)
     {
+        Config::set("server.request_timeout", $timeout);
+
         $request = JobRequest::make($jobManager, $job, $this);
         $response = JobResponse::make($jobManager, $job);
 

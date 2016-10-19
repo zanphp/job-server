@@ -6,6 +6,7 @@ namespace Zan\Framework\Components\JobServer\ServerStart;
 use Zan\Framework\Components\JobServer\JobMode;
 use Zan\Framework\Contract\Network\Bootable;
 use Zan\Framework\Foundation\Core\Config;
+use Zan\Framework\Foundation\Core\Debug;
 use Zan\Framework\Network\ServerManager\ServerRegisterInitiator;
 use swoole_server as SwooleServer;
 
@@ -13,9 +14,12 @@ class InitializeJobServerConfig implements Bootable
 {
     public function bootstrap($server)
     {
+        // TODO FOR DEBUG
+        $this->fixConnectionPool();
+
         if (JobMode::isOn()) {
             $this->disabledUnnecessaryComponents();
-            $this->fixTimeout();
+            // $this->fixTimeout();
             $this->fixMonitor();
             $this->fixCookie();     // http server 依赖cookie配置
             $this->fixRoute();      // http server 依赖路由配置
@@ -57,8 +61,8 @@ class InitializeJobServerConfig implements Bootable
         }
 
         foreach ($names as $type => $conf) {
-            Config::set("connection.$name.$type.pool.minimum-connection-count", 1);
-            Config::set("connection.$name.$type.pool.init-connection", 1);
+            Config::set("connection.$name.$type.pool.minimum-connection-count", 0);
+            Config::set("connection.$name.$type.pool.init-connection", 0);
         }
     }
 

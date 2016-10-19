@@ -88,18 +88,16 @@ class CronJobManager implements JobManager
         return true;
     }
 
-    public function error(Job $job, \Exception $ex = null)
+    public function error(Job $job, $reason)
     {
         if ($job->status !== Job::INIT) {
             return false;
         }
 
-        $msg = "";
-        if ($ex) {
-            echo_exception($ex);
-            $msg = $ex->getMessage();
+        if ($reason instanceof \Exception) {
+            $reason = $reason->getMessage();
         }
-        sys_echo("worker #{$this->swooleServer->worker_id} ERROR_CRON_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, msg=$msg]");
+        sys_echo("worker #{$this->swooleServer->worker_id} ERROR_CRON_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
 
         $job->status = Job::ERROR;
 
@@ -143,8 +141,8 @@ class CronJobManager implements JobManager
 
     public function start()
     {
-        $this->cronCheck();
-        $this->jobId = Timer::tick(1000, [$this, "cronCheck"]);
+        $this->doOneCronCheck();
+        $this->jobId = Timer::tick(1000, [$this, "doOneCronCheck"]);
 
         register_shutdown_function([$this, "dumpLastProcessTime"]);
         if (file_exists($this->file)) {
@@ -166,7 +164,7 @@ class CronJobManager implements JobManager
         }
     }
 
-    public function cronCheck()
+    public function doOneCronCheck()
     {
         if (Worker::getInstance()->isDenyRequest()) {
             $this->stop();
@@ -189,8 +187,12 @@ class CronJobManager implements JobManager
     {
         $crontab = implode("_", $crontab->getCrontab());
         $job = $this->makeCronJob($crontab, $ts, $jobKey);
+
+        $timeout = $this->cronConfigs[$jobKey]["timeout"];
+        /* @var  $processor JobProcessor */
         $processor = $this->jobProcessors[$jobKey];
-        $processor->process($this, $job);
+
+        $processor->process($this, $job, $timeout);
     }
 
     public function dumpLastProcessTime()

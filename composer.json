@@ -10,6 +10,10 @@
             "url": "git@gitlab.qima-inc.com:php-lib/nsq-async.git"
         },
         {
+            "type": "git",
+            "url": "git@gitlab.qima-inc.com:php-3rd-lib/symfony-console.git"
+        },
+        {
             "packagist": false
         },
         {
@@ -19,16 +23,15 @@
     ],
     "require": {
         "zanphp/zan": "dev-master",
-        "php-lib/nsq-async": "dev-master"
+        "php-lib/nsq-async": "dev-master",
+        "symfony/console": "3.1"
     },
     "autoload": {
         "psr-4": {
             "Zan\\Framework\\Components\\JobServer\\": "src/"
         },
         "classmap": [
-            "src/",
-            "test/",
-            "demo/"
+            "src/"
         ],
         "files": [
         ]

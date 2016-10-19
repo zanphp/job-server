@@ -4,6 +4,9 @@
  * User: chuxiaofeng
  * Date: 16/10/3
  * Time: 上午0:14
+ *
+ * 文档: http://crontab.org/
+ * 移植自嵌入式linux实现: https://git.busybox.net/busybox/tree/miscutils/crond.c?h=1_25_stable
  */
 namespace Zan\Framework\Components\JobServer;
 

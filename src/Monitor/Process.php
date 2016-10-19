@@ -7,7 +7,7 @@ use Zan\Framework\Foundation\Contract\Async;
 use swoole_process as SwooleProcess;
 use Zan\Framework\Network\Server\Timer\Timer;
 
-class Exec implements Async
+class Process implements Async
 {
     const DEFAULT_TIMEOUT = 1000;
 
@@ -18,11 +18,17 @@ class Exec implements Async
 
     protected $callback;
 
+    /**
+     * Async Exec
+     * @param $cmd
+     * @param int $timeout
+     * @return \Generator
+     */
     public static function exec($cmd, $timeout = self::DEFAULT_TIMEOUT)
     {
         $self = new static;
-        $recv = (yield $self->run($cmd, $timeout));
-        $self->stop();
+        $recv = (yield $self->pipeExec($cmd, $timeout));
+        $self->_exit();
         yield $recv;
     }
 
@@ -32,7 +38,15 @@ class Exec implements Async
         $this->process->start();
     }
 
-    public function run($cmd, $timeout = self::DEFAULT_TIMEOUT)
+    /**
+     * 在子进程内顺序异步执行命令
+     * worker进程异步处理, 子进程同步阻塞
+     * 注意最终调用_exit(), 保证子进程退出
+     * @param string $cmd
+     * @param int $timeout
+     * @return Async
+     */
+    public function pipeExec($cmd, $timeout = self::DEFAULT_TIMEOUT)
     {
         $overtimeId = Timer::after($timeout, $this->handleTimeout($cmd, $timeout));
 
@@ -45,7 +59,7 @@ class Exec implements Async
     /**
      * block
      */
-    public function stop()
+    public function _exit()
     {
         $this->process->write("exit");
         $this->process = null;
@@ -55,7 +69,7 @@ class Exec implements Async
     {
         return function() use($cmd, $timeout) {
             swoole_event_del($this->process->pipe);
-            $this->continueTask(null, new ExecTimeoutException("Exec <$cmd> timeout [{$timeout}ms]"));
+            $this->continueTask(null, new \RuntimeException("Exec <$cmd> timeout [{$timeout}ms]"));
         };
     }
 
@@ -118,7 +132,7 @@ class Exec implements Async
     public function __destruct()
     {
         if ($this->process) {
-            $this->stop();
+            $this->_exit();
         }
     }
 }

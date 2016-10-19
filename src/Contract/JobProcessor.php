@@ -7,5 +7,5 @@ use Zan\Framework\Components\JobServer\Job;
 
 interface JobProcessor
 {
-    public function process(JobManager $jobManager, Job $job);
+    public function process(JobManager $jobManager, Job $job, $timeout);
 }

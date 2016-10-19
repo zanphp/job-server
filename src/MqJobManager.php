@@ -68,13 +68,11 @@ class MqJobManager implements JobManager
         return true;
     }
 
-    protected function delay(Job $job)
+    protected function delay(Job $job, $reason)
     {
         if ($job->status !== Job::INIT) {
             return false;
         }
-
-        sys_echo("worker #{$this->swooleServer->worker_id} DELAY_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, delay={$job->attempts}]");
 
         /* @var $msg Msg */
         $msg = $job->extra;
@@ -82,23 +80,23 @@ class MqJobManager implements JobManager
         $msg->delay($delay);
         $job->status = Job::RETRY;
 
+        sys_echo("worker #{$this->swooleServer->worker_id} DELAY_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, delay={$delay}s, reason=$reason]");
+
         JobMonitor::delay($job);
 
         return true;
     }
 
-    public function error(Job $job, \Exception $ex = null)
+    public function error(Job $job, $reason)
     {
-        if ($ex) {
-            echo_exception($ex);
+        if ($reason instanceof \Exception) {
+            $reason = $reason->getMessage();
         }
-        
         if ($job->attempts >= static::MAX_ATTEMPTS) {
-            sys_echo("worker #{$this->swooleServer->worker_id} ERROR_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts]");
-
+            sys_echo("worker #{$this->swooleServer->worker_id} ERROR_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
             $this->done($job);
         } else {
-            $this->delay($job);
+            $this->delay($job, $reason);
         }
 
         JobMonitor::error($job);
@@ -183,9 +181,10 @@ class MqJobManager implements JobManager
 
             $this->nodes[$jobKey] = $node;
 
+            $timeout = $this->jobConfigs[$jobKey]["timeout"];
             $job = $this->jobDecode($jobKey, $msg);
-
-            $jobProcessor->process($this, $job);
+            
+            $jobProcessor->process($this, $job, $timeout);
         };
     }
 

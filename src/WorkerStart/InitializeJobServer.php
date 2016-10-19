@@ -22,6 +22,8 @@ use swoole_server as SwooleServer;
 
 class InitializeJobServer implements Bootable
 {
+    const DEFAULT_TIMEOUT = 60000;
+
     /**
      * @var MqJobManager
      */
@@ -43,7 +45,7 @@ class InitializeJobServer implements Bootable
             $swServer = $server->swooleServer;
             $this->init($swServer);
 
-//            JobMonitor::start($swServer);
+            JobMonitor::start($swServer);
         }
     }
     
@@ -161,6 +163,7 @@ class InitializeJobServer implements Bootable
     protected function doBootMqWorker(array $conf)
     {
         $options = [
+            "timeout" => static::DEFAULT_TIMEOUT,
             "method" => "GET",
             "header" => [],
             "body" => "",
@@ -192,6 +195,7 @@ class InitializeJobServer implements Bootable
         $workerId = $swServ->worker_id;
 
         $options = [
+            "timeout" => static::DEFAULT_TIMEOUT,
             "strict" => false,
             "method" => "GET",
             "header" => [],

@@ -25,10 +25,10 @@ interface JobManager
     /**
      * 标记Job出错
      * @param Job $job
-     * @param \Exception|null $ex
+     * @param \Exception|string $reason
      * @return bool
      */
-    public function error(Job $job, \Exception $ex = null);
+    public function error(Job $job, $reason);
 
     /**
      * 注册Job

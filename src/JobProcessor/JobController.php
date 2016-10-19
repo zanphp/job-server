@@ -44,10 +44,14 @@ class JobController extends HttpController
         }
     }
 
-    public function jobError(\Exception $ex = null)
+    /**
+     * @param \Exception|string $reason
+     * @return \Generator
+     */
+    public function jobError($reason)
     {
         if ($job = $this->getJob()) {
-            $this->getJobManager()->error($job, $ex);
+            $this->getJobManager()->error($job, $reason);
             yield new Response("", 500);
         } else {
             yield new Response("", 404);

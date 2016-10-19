@@ -46,6 +46,7 @@ class JobMonitor
         static::$mgr[JobMode::CRON] = Di::make(CronJobManager::class, [], true);
 
         $workerId = static::$swooleServer->worker_id;
+        
         Timer::after(1 + $workerId * 200, function() {
             Timer::tick(static::STORE_INTERVAL, function() {
                 foreach (static::$mgr as $jobMode => $_) {
@@ -166,17 +167,19 @@ class JobMonitor
         $connections = Config::get("connection");
 
         $ex = null;
-        $exec = new Exec;
+        $process = new Process;
+
         try {
             foreach ($connections as $type => $connection) {
                 foreach ($connection as $key => $item) {
                     if (isset($item["pool"]) && $item["pool"]) {
-                        $connStat["$type.$key"] = (yield static::socketStatus($exec, $item["host"], $item["port"]));
+                        $connStat["$type.$key"] = (yield static::socketStatus($process, $item["host"], $item["port"]));
                     }
                 }
             }
         } catch (\Exception $ex) {}
-        $exec->stop();
+        
+        $process->_exit();
 
         if ($ex) {
             throw $ex;
@@ -188,9 +191,9 @@ class JobMonitor
         ];
     }
 
-    private static function socketStatus(Exec $exec, $host, $port) {
+    private static function socketStatus(Process $process, $host, $port) {
         if (!ip2long($host)) {
-            $host = (yield DnsLookup::lookup($host, 200));
+            $host = (yield Dns::lookup($host, 200));
         }
 
         if (PHP_OS === "Darwin") {
@@ -203,7 +206,7 @@ class JobMonitor
 
         $info = [];
         foreach ($states as $state) {
-            $recv = (yield $exec->run(sprintf("$cmd | wc -l", $state)));
+            $recv = (yield $process->pipeExec(sprintf("$cmd | wc -l", $state)));
             $info[$state] = intval(trim($recv)) - 1;
         }
         yield $info;

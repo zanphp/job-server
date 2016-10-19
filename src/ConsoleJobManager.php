@@ -14,6 +14,8 @@ use swoole_server as SwooleServer;
 
 class ConsoleJobManager implements JobManager
 {
+    const DEFAULT_TIMEOUT = 60000;
+
     protected $swooleServer;
 
     /**
@@ -49,13 +51,16 @@ class ConsoleJobManager implements JobManager
         return true;
     }
 
-    public function error(Job $job, \Exception $ex = null)
+    public function error(Job $job, $reason)
     {
         if ($job->status !== Job::INIT) {
             return false;
         }
 
-        sys_echo("ERROR_CRON_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts]");
+        if ($reason instanceof \Exception) {
+            $reason = $reason->getMessage();
+        }
+        sys_echo("ERROR_CONSOLE_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
         $job->status = Job::ERROR;
 
         $this->stop();
@@ -90,9 +95,11 @@ class ConsoleJobManager implements JobManager
         $jobKey = parse_url($args["uri"], PHP_URL_PATH);
         $this->register($jobKey, $processor);
 
+        $timeout = intval($args["timeout"]);
+        $timeout = $timeout < 0 ? static::DEFAULT_TIMEOUT : $timeout;
         $job = $this->makeConsoleJob($jobKey, $args);
 
-        $processor->process($this, $job);
+        $processor->process($this, $job, $timeout);
 
         // TODO 如果是非JobController子类, 没有调用stop, 如何stop
         // Timer::after(60 * 1000, function() { $this->stop(); });
@@ -128,6 +135,8 @@ class ConsoleJobManager implements JobManager
             static::$inputDefinition = new InputDefinition([
                 new InputArgument('request-uri', InputArgument::OPTIONAL, "Set the server request_uri", null),
 
+                new InputOption('timeout', 't', InputOption::VALUE_OPTIONAL,
+                    "job processing timeout", static::DEFAULT_TIMEOUT),
                 new InputOption('header', 'H', InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
                     "Extra header to include in the request when invoking console command", []),
                 new InputOption('request', 'X', InputOption::VALUE_OPTIONAL,
@@ -156,8 +165,9 @@ class ConsoleJobManager implements JobManager
             try {
                 $argvInput = new ArgvInput($_SERVER["argv"], static::getInputDefinition());
                 $args = [
-                    "method" => $argvInput->getOption("request"),
                     "uri" => $argvInput->getArgument("request-uri"),
+                    "timeout" => $argvInput->getOption("timeout"),
+                    "method" => $argvInput->getOption("request"),
                     "header" => $argvInput->getOption("header"),
                     "body" => $argvInput->getOption("data"),
                 ];
