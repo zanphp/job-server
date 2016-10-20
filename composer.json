@@ -1,5 +1,5 @@
 {
-    "name": "zanphp/components/job-server",
+    "name": "php-lib/job-server",
     "repositories": [
         {
             "type": "git",
