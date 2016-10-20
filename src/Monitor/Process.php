@@ -18,6 +18,8 @@ class Process implements Async
 
     protected $callback;
 
+    protected $readCallback;
+
     /**
      * Async Exec
      * @param $cmd
@@ -50,8 +52,12 @@ class Process implements Async
     {
         $overtimeId = Timer::after($timeout, $this->handleTimeout($cmd, $timeout));
 
+        $this->readCallback = $this->readResult($overtimeId);
+
+        swoole_event_del($this->process->pipe);
+
         $flag = SWOOLE_EVENT_READ | SWOOLE_EVENT_WRITE;
-        swoole_event_add($this->process->pipe, $this->readResult($overtimeId), $this->writeCmd($cmd), $flag);
+        swoole_event_add($this->process->pipe, $this->readCallback, $this->writeCmd($cmd), $flag);
 
         yield $this;
     }
@@ -69,7 +75,7 @@ class Process implements Async
     {
         return function() use($cmd, $timeout) {
             swoole_event_del($this->process->pipe);
-            $this->continueTask(null, new \RuntimeException("Exec <$cmd> timeout [{$timeout}ms]"));
+            $this->continueTask(null, new \RuntimeException("Exec [$cmd] timeout [{$timeout}ms]"));
         };
     }
 
@@ -78,7 +84,7 @@ class Process implements Async
         return function($pipe) use($overtimeId) {
             Timer::clearAfterJob($overtimeId);
             $recv = $this->process->read();
-            // sys_echo("Exec recv: $recv");
+            // sys_echo("Exec readResult: $recv");
             $recv = json_decode($recv, true);
             if (is_array($recv)) {
                 $this->continueTask($recv["output"]);
@@ -92,7 +98,7 @@ class Process implements Async
     {
         return function($pipe) use($cmd) {
             $this->process->write($cmd); // check writeN
-            swoole_event_set($this->process->pipe, null, null);
+            swoole_event_set($this->process->pipe, $this->readCallback);
         };
     }
 
@@ -102,7 +108,7 @@ class Process implements Async
             // block loop
             while (true) {
                 $cmd = $process->read();
-                // sys_echo("Exec recv: $cmd");
+                // sys_echo("Exec loopCmdTask: $cmd");
                 if ($cmd === "exit") {
                     $process->exit(0);
                     return;
