@@ -3,7 +3,7 @@
 namespace Zan\Framework\Components\JobServer;
 
 use Kdt\Iron\NSQ\Message\Msg;
-use Kdt\Iron\NSQ\Piping\Node;
+//use Kdt\Iron\NSQ\Piping\Node;
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
@@ -34,7 +34,7 @@ class MqJobManager implements JobManager
     /**
      * @var array jobKey => Node[]
      */
-    protected $nodes = [];
+    // protected $nodes = [];
 
     public function __construct(Queue $msgQueue, SwooleServer $swooleServer)
     {
@@ -123,16 +123,16 @@ class MqJobManager implements JobManager
     // 2. 直接关闭连接,可能有数据没发送完
     public function unRegister($jobKey)
     {
-        sys_echo("worker #{$this->swooleServer->worker_id} UN_REGISTER_MQ_JOB [jobKey=$jobKey]");
-
-        if (isset($this->nodes[$jobKey])) {
-            foreach ($this->nodes[$jobKey] as $node) {
-                /* @var $node Node */
-                $node->close();
-            }
-            unset($this->nodes[$jobKey]);
-            unset($this->processors[$jobKey]);
-        }
+//        sys_echo("worker #{$this->swooleServer->worker_id} UN_REGISTER_MQ_JOB [jobKey=$jobKey]");
+//
+//        if (isset($this->nodes[$jobKey])) {
+//            foreach ($this->nodes[$jobKey] as $node) {
+//                /* @var $node Node */
+//                $node->close();
+//            }
+//            unset($this->nodes[$jobKey]);
+//            unset($this->processors[$jobKey]);
+//        }
     }
 
     public function listJob()
@@ -169,7 +169,7 @@ class MqJobManager implements JobManager
 
     public function onReceive($jobKey, JobProcessor $jobProcessor)
     {
-        return function(Msg $msg, Node $node = null) use($jobKey, $jobProcessor) {
+        return function(Msg $msg/*, Node $node = null*/) use($jobKey, $jobProcessor) {
 
             if (Worker::getInstance()->isDenyRequest()) {
                 $this->stop();
@@ -179,7 +179,7 @@ class MqJobManager implements JobManager
                 return;
             }
 
-            $this->nodes[$jobKey] = $node;
+            // $this->nodes[$jobKey] = $node;
 
             $timeout = $this->jobConfigs[$jobKey]["timeout"];
             $job = $this->jobDecode($jobKey, $msg);
