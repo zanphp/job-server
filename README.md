@@ -1,5 +1,6 @@
+# Zan Job Server
 
-1. 简介模式
+## 1. 简介
 
 JobWorker是依赖Zan框架的一个单机任务作业的Package;
 
@@ -11,19 +12,41 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
 
 
 
-## 1. 快速开始
+## 2. 快速开始
 
-1. composer.json 加入
+### 1. composer.json 加入 php-lib/job-server
 
-2. 加入ServerStart 与 WorkerStart
+### 2. 配置 ServerStart 与 WorkerStart
 
-3. 需要在项目src/controller路径写任务逻辑的JobController;
-    与 Http Controller不同点:
-    1. 需要继承 JobController, JobController 子类的方法在cron,mqworker,cli三种模式下均可以调用
-    2. 需要在方法最后调用 jobDone 或 jobError 方法来标注任务执行结果;
-    3. 作业抛出异常, 默认会被调用jobError
+./init/ServerStart/.config.php
 
-    controller示例
+```
+<?php
+use Zan\Framework\Components\JobServer\ServerStart\InitializeJobServerConfig;
+
+return [
+    InitializeJobServerConfig::class,
+];
+```
+
+./init/WorkerStart/.config.php
+
+```
+<?php
+use Zan\Framework\Components\JobServer\WorkerStart\InitializeJobServer;
+
+return [
+    InitializeJobServer::class,
+];
+```
+
+### 3. 在项目src/controller路径写任务;
+
+    1. 作业类 需要继承 JobController, 且在cron,mqworker,cli三种模式下均可以调用;
+    2. 需要在方法结尾或异常处 调用$this->jobDone() 或 $this->jobError() 方法来标注任务执行结果;
+    3. 作业抛出异常, 默认会被调用jobError()
+
+controller示例
 
     ```php
     class TaskController extends JobController
@@ -42,8 +65,11 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
     }
     ```
 
-4. 配置
+### 4. 配置
 
+    配置路径结构
+
+```
     config/share/cron/
         foo/
             cron1.php
@@ -58,6 +84,7 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
         bar/
             mqw3.php
             mqw4.php
+```
 
     cron.php
 
@@ -117,32 +144,30 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
     ~~~
 
 
-5. bin目录新建一个启动脚本, 配置环境变量
+### 5. 在bin目录新建一个启动脚本, 配置环境变量
 
-    通过环境变量标注当前JobServer模式, 逗号分隔, 目前支持三种模式;
+通过环境变量标注当前JobServer模式, 逗号分隔, 目前支持三种模式; 例子:
 
-    例子:
-        ZAN_JOB_MODE=cron,mqworker,cli
+- ZAN_JOB_MODE=cron,mqworker,cli
 
-    注: 通过命令行执行Job, 将不会启动MqWorker与CronWorker
-
+注: 通过命令行执行Job, 将不会启动MqWorker与CronWorker
 
 
-
-
-
-
-3. CronWorker
+## 3. CronWorker
     保证每个cron作业绑定到某个具体Worker;
+
     CronWorker内部的作业失败不会重试;
 
-4. MqWorker
+## 4. MqWorker
+
     每个worker开n个coroutine, 每个coroutine维持一个到mq的长连接, 在onReceive的回调中构造http请求执行作业;
+
     作业中一定要标注worker Done或者worker Error
 
     1. 使用之前先@冬瓜在nsq中添加topic
 
     使用mqworker,需要配置nsq, lookupd
+
     config/env/nsq.php
     ~~~php
     return [
@@ -153,12 +178,13 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
     2. yield $this->jobError(); 调用任务失败之后, 会自动延时重试, 最多重试5次, 每次延时 2 ** 重试次数秒((2s -> 4s -> 8s -> 16s -> 32s))
 
 
-5. CliWorker
+## 5. CliWorker
 
     通过 命令行参数构造http请求,执行作业;
 
     加入启动参数, 且配置了ZAN_JOB_MODE环境变量配置了cli, 默认启动cliworker
 
+```
 ./jobWorker [-H -X -d] uri
 -t --timeout    60000
 -H --header     header 支持多个
@@ -169,3 +195,38 @@ e.g.
 ./jobWorker --help
 ./jobWorker -H "Content-type: application/x-www-form-urlencoded" -X POST --data "foo=bar" -t 10000 job/task/product?kdt_id=1
 ./jobWorker -H "Content-type: Content-type: application/json" -X POST --data '{"foo": "bar"}' -t 5000 job/task/product?kdt_id=2
+```
+
+## 6. 监控
+
+如果worker的载体为http服务器, 可添加监控的controller, 通过web请求响应url访问;
+
+example: ./src/Controller/Job/MonitorController.php
+
+```
+<?php
+
+namespace Zan\Framework\Components\JobServer\Controller\Job;
+
+use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
+use Zan\Framework\Foundation\Domain\HttpController;
+use Zan\Framework\Network\Http\Response\JsonResponse;
+
+class MonitorController extends HttpController
+{
+    // 当前作业列表信息
+    public function jobList()
+    {
+        $ret = (yield JobMonitor::getJobList());
+        yield new JsonResponse($ret);
+    }
+
+    // 当前作业连接池信息
+    public function poolStat()
+    {
+        $status = (yield JobMonitor::getConnectionPoolStatus());
+        yield new JsonResponse($status);
+    }
+}
+```
+
