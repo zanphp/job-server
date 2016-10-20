@@ -75,9 +75,9 @@ class JobMonitor
         }
 
         if ($job->attempts > 1) {
-            static::decr("delay", $job->jobKey);
+            ShareCounter::decr("$job->jobKey#delay");
         }
-        static::incr("done", $job->jobKey);
+        ShareCounter::incr("$job->jobKey#done");
     }
 
     public static function error(Job $job)
@@ -86,7 +86,7 @@ class JobMonitor
             return;
         }
 
-        static::incr("error", $job->jobKey);
+        ShareCounter::incr("$job->jobKey#error");
     }
 
     public static function delay(Job $job)
@@ -94,49 +94,31 @@ class JobMonitor
         if (!static::$swooleServer) {
             return;
         }
-        
-        static::incr("delay", $job->jobKey);
-    }
-
-    protected static function incr($type, $jobKey)
-    {
-        $key = static::formatCountKey($type, $jobKey);
-        apcu_add($key, 0);
-        apcu_inc($key, 1, $ok);
-        return $ok;
-    }
-
-    protected static function decr($type, $jobKey)
-    {
-        $key = static::formatCountKey($type, $jobKey);
-        apcu_dec($key, 1, $ok);
-        return $ok;
-    }
-
-    protected static function formatCountKey($type, $jobKey)
-    {
-        $workerId = static::$swooleServer->worker_id;
-        return sprintf(static::COUNT_KEY_FMT, $workerId, $type, $jobKey);
+        ShareCounter::incr("$job->jobKey#delay");
     }
 
     protected static function getJobListByMode($jobMode)
     {
         $list = [];
+
+        $countStatistics = ShareCounter::statistic();
+
         $workerNum = static::$swooleServer->setting["worker_num"];
         for ($i = 0; $i < $workerNum; $i++) {
+
             $subList = static::getShareList($i, $jobMode);
+            $countStatistic = $countStatistics[$i];
 
             foreach ($subList as $jobKey => &$value) {
                 foreach (["done", "error", "delay"] as $type) {
-                    $key = static::formatCountKey($type, $jobKey);
-                    $value["count_$type"] = apcu_fetch($key) ?:0;
+                    $key = "$jobKey#$type";
+                    $value["count_$type"] = isset($countStatistic[$key]) ? $countStatistic[$key] : 0;
                 }
             }
             unset($value);
 
             $list["worker#$i"] = $subList;
         }
-
         return $list;
     }
 
