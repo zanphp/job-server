@@ -20,7 +20,7 @@ JobWorker是依赖Zan框架的一个单机任务作业的Package;
 
 ./init/ServerStart/.config.php
 
-```
+```php
 <?php
 use Zan\Framework\Components\JobServer\ServerStart\InitializeJobServerConfig;
 
@@ -31,7 +31,7 @@ return [
 
 ./init/WorkerStart/.config.php
 
-```
+```php
 <?php
 use Zan\Framework\Components\JobServer\WorkerStart\InitializeJobServer;
 
@@ -46,9 +46,10 @@ return [
     2. 需要在方法结尾或异常处 调用$this->jobDone() 或 $this->jobError() 方法来标注任务执行结果;
     3. 作业抛出异常, 默认会被调用jobError()
 
-controller示例
+jobController示例:
 
-    ```php
+```php
+
     class TaskController extends JobController
     {
         public function product()
@@ -63,11 +64,11 @@ controller示例
             }
         }
     }
-    ```
+```
 
 ### 4. 配置
 
-    配置路径结构
+配置路径结构
 
 ```
     config/share/cron/
@@ -86,9 +87,10 @@ controller示例
             mqw4.php
 ```
 
-    cron.php
 
-    ~~~php
+cron配置示例:
+
+```php
     <?php
     return [
         "cronJob1" => [
@@ -119,10 +121,12 @@ controller示例
             "body" => ""{"foo": "bar"}"",
         ],
     ];
-    ~~~
+```
 
-    mqworker.php
-    ~~~
+
+mqworker配置示例:
+
+```php
     <?php
     return [
         "mqJob1" => [
@@ -141,7 +145,7 @@ controller示例
             "channel" => "ch1",
         ],
     ];
-    ~~~
+```
 
 
 ### 5. 在bin目录新建一个启动脚本, 配置环境变量
