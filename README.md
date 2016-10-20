@@ -49,7 +49,7 @@ return [
 jobController示例:
 
 ```php
-
+<?php
     class TaskController extends JobController
     {
         public function product()
@@ -158,44 +158,51 @@ mqworker配置示例:
 
 
 ## 3. CronWorker
-    保证每个cron作业绑定到某个具体Worker;
 
-    CronWorker内部的作业失败不会重试;
+保证每个cron作业绑定到某个具体Worker;
+
+CronWorker内部的作业失败不会重试;
 
 ## 4. MqWorker
 
-    每个worker开n个coroutine, 每个coroutine维持一个到mq的长连接, 在onReceive的回调中构造http请求执行作业;
+使用之前先@冬瓜在nsq中添加topic
 
-    作业中一定要标注worker Done或者worker Error
+使用mqworker,需要配置nsq, lookupd
 
-    1. 使用之前先@冬瓜在nsq中添加topic
+config/env/nsq.php
 
-    使用mqworker,需要配置nsq, lookupd
-
-    config/env/nsq.php
-    ~~~php
+```php
     return [
         'lookupd' => 'http:nsq-dev.s.qima-inc.com:4161',
     ];
-    ~~~
+```
 
-    2. yield $this->jobError(); 调用任务失败之后, 会自动延时重试, 最多重试5次, 每次延时 2 ** 重试次数秒((2s -> 4s -> 8s -> 16s -> 32s))
+每个worker开n个coroutine, 每个coroutine维持一个到mq的长连接, 在onReceive的回调中构造http请求执行作业;
+
+需要在作业方法结尾或异常处 调用$this->jobDone() 或 $this->jobError() 方法来标注任务执行结果;
+
+手动 yield $this->jobError() 或者 调用任务失败之后, 会自动延时重试,
+
+最多重试5次, 每次延时 2 ** 重试次数秒((2s -> 4s -> 8s -> 16s -> 32s))
 
 
 ## 5. CliWorker
 
-    通过 命令行参数构造http请求,执行作业;
+通过 命令行参数构造http请求,执行作业;
 
-    加入启动参数, 且配置了ZAN_JOB_MODE环境变量配置了cli, 默认启动cliworker
+ZAN_JOB_MODE环境变量含有cli, 加入命令行参数, 默认启动cliworker
 
-```
-./jobWorker [-H -X -d] uri
--t --timeout    60000
+```shell
+./<job_server_bin> [-H -X -d -t] uri
+-t --timeout    60000 timeout ms
 -H --header     header 支持多个
 -X --request    request method
 -d --data       request body
+```
 
 e.g.
+
+```shell
 ./jobWorker --help
 ./jobWorker -H "Content-type: application/x-www-form-urlencoded" -X POST --data "foo=bar" -t 10000 job/task/product?kdt_id=1
 ./jobWorker -H "Content-type: Content-type: application/json" -X POST --data '{"foo": "bar"}' -t 5000 job/task/product?kdt_id=2
