@@ -214,7 +214,7 @@ e.g.
 
 example: ./src/Controller/Job/MonitorController.php
 
-```
+```php
 <?php
 
 namespace Zan\Framework\Components\JobServer\Controller\Job;
