@@ -5,7 +5,8 @@
 ## 1. 简介
 
 > JobWorker是依赖Zan框架的一个单机任务作业的Package;
-> 原理是通过构造request与response对象, 伪造Http请求流程执行三种作业任务;
+
+> 通过构造request与response对象, 伪造Http请求流程执行以下三种作业任务;
 
 1. cron: 周期性作业
 2. mqworker: NSQ消息队列实时作业
