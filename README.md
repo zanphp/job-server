@@ -8,9 +8,9 @@
 
 > 通过构造request与response对象, 伪造Http请求流程执行以下三种作业任务;
 
-1. cron: 周期性作业
-2. mqworker: NSQ消息队列实时作业
-3. cli: 命令行一次性作业
+1. **cron**: 周期性作业
+2. **mqworker**: NSQ消息队列实时作业
+3. **cli**: 命令行一次性作业
 
 ## 2. 快速开始
 
@@ -235,9 +235,7 @@ $server->start();
 
 ### 6. 监控
 
-如果worker的载体为http服务器, 可添加监控的Controller, 通过Web请求响应监控任务执行状态;
-
-[~参考~](http://gitlab.qima-inc.com/php-lib/job-server-demo/blob/master/src/Controller/Job/MonitorController.php)
+如果worker的载体为http服务器, 可添加监控的Controller, 通过Web请求响应监控任务执行状态, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/blob/master/src/Controller/Job/MonitorController.php)
 
 ```php
 <?php
