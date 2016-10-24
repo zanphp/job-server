@@ -55,7 +55,7 @@ class CronJobManager implements JobManager
             $logDir = sprintf(static::LOG_DIR_FMT, Application::getInstance()->getName());
             if (!file_exists($logDir)) {
                 // -rw-r--r--
-                mkdir($logDir, 0644, true);
+                @mkdir($logDir, 0644, true);
             }
         }
 
