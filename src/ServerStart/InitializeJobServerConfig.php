@@ -59,8 +59,10 @@ class InitializeJobServerConfig implements Bootable
         }
 
         foreach ($names as $type => $conf) {
-            Config::set("connection.$name.$type.pool.minimum-connection-count", 1);
-            Config::set("connection.$name.$type.pool.init-connection", 1);
+            if (Config::get("connection.$name.$type.pool")) {
+                Config::set("connection.$name.$type.pool.minimum-connection-count", 0);
+                Config::set("connection.$name.$type.pool.init-connection", 0);
+            }
         }
     }
 
