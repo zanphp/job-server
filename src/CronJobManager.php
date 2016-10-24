@@ -49,21 +49,25 @@ class CronJobManager implements JobManager
 
     protected function init()
     {
+        $workerId = $this->swooleServer->worker_id;
+        $appName = Application::getInstance()->getName();
+        $ymd = date("Y-m-d");
+
         if (PHP_OS === "Darwin") {
             $logDir = sys_get_temp_dir();
         } else {
-            $logDir = sprintf(static::LOG_DIR_FMT, Application::getInstance()->getName());
-            if (!file_exists($logDir)) {
-                @mkdir($logDir, 0755, true);
+            $logDir = sprintf(static::LOG_DIR_FMT, $appName);
+            // 避免mkdir竞态
+            if ($workerId === 0) {
+                if (!file_exists($logDir)) {
+                    mkdir($logDir, 0755, true);
+                }
             }
         }
 
-        $appName = Application::getInstance()->getName();
-        $ymd = date("Y-m-d");
-        $workerId = $this->swooleServer->worker_id;
-
         // 按workerId分开存储, 避免对文件加锁, 减少文件体积,
-        // 但是受cronjob配置的顺序影响, 受到worker_num调节影响
+        // 1. cronjob配置的顺序影响
+        // 2. worker_num调节影响
         $this->file = "$logDir/$appName#cron#$ymd#$workerId.data";
     }
 
