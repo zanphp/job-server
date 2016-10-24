@@ -43,10 +43,18 @@ class InitializeJobServer implements Bootable
     {
         if (JobMode::isOn()) {
             $swServer = $server->swooleServer;
+
+            // $this->fixMultiThreadSignalBug();
+
             $this->init($swServer);
 
             JobMonitor::start($swServer);
         }
+    }
+
+    protected function fixMultiThreadSignalBug()
+    {
+        pcntl_signal(SIGTERM, function() {});
     }
     
     protected function init(SwooleServer $swServ)
