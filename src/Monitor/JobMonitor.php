@@ -100,16 +100,16 @@ class JobMonitor
     {
         $list = [];
 
-        if (PHP_OS === "Darwin") {
+        // if (PHP_OS === "Darwin") {
             $countStatistics = ShareCounter::statistic();
-        }
+        // }
 
         $workerNum = static::$swooleServer->setting["worker_num"];
         for ($i = 0; $i < $workerNum; $i++) {
 
             $subList = static::getShareList($i, $jobMode);
 
-            if (PHP_OS === "Darwin") {
+            // if (PHP_OS === "Darwin") {
 
                 /** @noinspection PhpUndefinedVariableInspection */
                 $countStatistic = $countStatistics[$i];
@@ -120,7 +120,8 @@ class JobMonitor
                     }
                 }
                 unset($value);
-                
+
+            /*
             } else {
                 foreach ($subList as $jobKey => &$value) {
                     foreach (["done", "error", "delay"] as $type) {
@@ -129,6 +130,7 @@ class JobMonitor
                 }
                 unset($value);
             }
+            */
 
             $list["worker#$i"] = $subList;
         }

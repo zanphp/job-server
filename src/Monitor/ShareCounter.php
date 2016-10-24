@@ -56,9 +56,9 @@ class ShareCounter
 
         static::$swooleServer = $swServer;
 
-        if (PHP_OS === "Darwin") {
+        // if (PHP_OS === "Darwin") {
             static::initAtomicCounter();
-        }
+        // }
 
         return true;
     }
@@ -128,7 +128,7 @@ class ShareCounter
             return false;
         }
 
-        if (PHP_OS === "Darwin") {
+        // if (PHP_OS === "Darwin") {
 
             if (!isset(static::$keyCounter[$key])) {
                 static::$keyCounter[$key] = static::fetchOneCounter($key);
@@ -138,6 +138,8 @@ class ShareCounter
             $atomic = static::$keyCounter[$key];
 
             return $atomic->add($n);
+
+        /*
         } else {
 
             $ok = true;
@@ -147,6 +149,7 @@ class ShareCounter
             }
             return $ok;
         }
+        */
     }
 
     /**
@@ -162,7 +165,7 @@ class ShareCounter
             return false;
         }
 
-        if (PHP_OS === "Darwin") {
+        // if (PHP_OS === "Darwin") {
 
             if (!isset(static::$keyCounter[$key])) {
                 return false;
@@ -173,11 +176,13 @@ class ShareCounter
 
             return $atomic->sub($n);
 
+        /*
         } else {
             $key = static::apcuKey($key);
             apcu_dec($key, $n, $ok);
             return $ok;
         }
+        */
     }
 
     /**
@@ -195,7 +200,7 @@ class ShareCounter
 
         $list = [];
 
-        if (PHP_OS === "Darwin") {
+        // if (PHP_OS === "Darwin") {
 
             $workerNum = static::$swooleServer->setting["worker_num"];
             for ($i = 0; $i < $workerNum; $i++) {
@@ -216,9 +221,11 @@ class ShareCounter
                 }
             }
 
+        /*
         } else {
 
         }
+        */
 
         return $list;
     }
