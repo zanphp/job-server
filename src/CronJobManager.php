@@ -15,7 +15,7 @@ use swoole_server as SwooleServer;
 
 class CronJobManager implements JobManager
 {
-    const LOG_DIR = "/data/log/zan_job";
+    const LOG_DIR_FMT = "/data/logs/job-%s";
     const DUMP_INTERVAL = 1000;
 
     protected $swooleServer;
@@ -49,14 +49,14 @@ class CronJobManager implements JobManager
 
     protected function init()
     {
-        if (Debug::get()) {
-            $dir = sys_get_temp_dir();
+        if (PHP_OS === "Darwin") {
+            $logDir = sys_get_temp_dir();
         } else {
-            if (!is_dir(static::LOG_DIR)) {
+            $logDir = sprintf(static::LOG_DIR_FMT, Application::getInstance()->getName());
+            if (!file_exists($logDir)) {
                 // -rw-r--r--
-                mkdir(static::LOG_DIR, 0644, true);
+                mkdir($logDir, 0644, true);
             }
-            $dir = static::LOG_DIR;
         }
 
         $appName = Application::getInstance()->getName();
@@ -65,7 +65,7 @@ class CronJobManager implements JobManager
 
         // 按workerId分开存储, 避免对文件加锁, 减少文件体积,
         // 但是受cronjob配置的顺序影响, 受到worker_num调节影响
-        $this->file = "$dir/$appName#cron#$ymd#$workerId.data";
+        $this->file = "$logDir/$appName#cron#$ymd#$workerId.data";
     }
 
     public function submit($dst, $body)

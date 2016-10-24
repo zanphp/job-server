@@ -100,37 +100,22 @@ class JobMonitor
     {
         $list = [];
 
-        // if (PHP_OS === "Darwin") {
-            $countStatistics = ShareCounter::statistic();
-        // }
+        $countStatistics = ShareCounter::statistic();
 
         $workerNum = static::$swooleServer->setting["worker_num"];
         for ($i = 0; $i < $workerNum; $i++) {
 
             $subList = static::getShareList($i, $jobMode);
 
-            // if (PHP_OS === "Darwin") {
-
-                /** @noinspection PhpUndefinedVariableInspection */
-                $countStatistic = $countStatistics[$i];
-                foreach ($subList as $jobKey => &$value) {
-                    foreach (["done", "error", "delay"] as $type) {
-                        $key = "$jobKey#$type";
-                        $value["count_$type"] = isset($countStatistic[$key]) ? $countStatistic[$key] : 0;
-                    }
+            /** @noinspection PhpUndefinedVariableInspection */
+            $countStatistic = $countStatistics[$i];
+            foreach ($subList as $jobKey => &$value) {
+                foreach (["done", "error", "delay"] as $type) {
+                    $key = "$jobKey#$type";
+                    $value["count_$type"] = isset($countStatistic[$key]) ? $countStatistic[$key] : 0;
                 }
-                unset($value);
-
-            /*
-            } else {
-                foreach ($subList as $jobKey => &$value) {
-                    foreach (["done", "error", "delay"] as $type) {
-                        $value["count_$type"] = ShareCounter::apcuGet("$jobKey#$type");
-                    }
-                }
-                unset($value);
             }
-            */
+            unset($value);
 
             $list["worker#$i"] = $subList;
         }

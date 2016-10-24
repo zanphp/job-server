@@ -56,9 +56,7 @@ class ShareCounter
 
         static::$swooleServer = $swServer;
 
-        // if (PHP_OS === "Darwin") {
-            static::initAtomicCounter();
-        // }
+        static::initAtomicCounter();
 
         return true;
     }
@@ -128,28 +126,14 @@ class ShareCounter
             return false;
         }
 
-        // if (PHP_OS === "Darwin") {
-
-            if (!isset(static::$keyCounter[$key])) {
-                static::$keyCounter[$key] = static::fetchOneCounter($key);
-            }
-
-            /* @var $atomic SwooleAtomic */
-            $atomic = static::$keyCounter[$key];
-
-            return $atomic->add($n);
-
-        /*
-        } else {
-
-            $ok = true;
-            $key = static::apcuKey($key);
-            if (!apcu_add($key, $n)) {
-                apcu_inc($key, $n, $ok);
-            }
-            return $ok;
+        if (!isset(static::$keyCounter[$key])) {
+            static::$keyCounter[$key] = static::fetchOneCounter($key);
         }
-        */
+
+        /* @var $atomic SwooleAtomic */
+        $atomic = static::$keyCounter[$key];
+
+        return $atomic->add($n);
     }
 
     /**
@@ -165,24 +149,14 @@ class ShareCounter
             return false;
         }
 
-        // if (PHP_OS === "Darwin") {
-
-            if (!isset(static::$keyCounter[$key])) {
-                return false;
-            }
-
-            /* @var $atomic SwooleAtomic */
-            $atomic = static::$keyCounter[$key];
-
-            return $atomic->sub($n);
-
-        /*
-        } else {
-            $key = static::apcuKey($key);
-            apcu_dec($key, $n, $ok);
-            return $ok;
+        if (!isset(static::$keyCounter[$key])) {
+            return false;
         }
-        */
+
+        /* @var $atomic SwooleAtomic */
+        $atomic = static::$keyCounter[$key];
+
+        return $atomic->sub($n);
     }
 
     /**
@@ -200,46 +174,26 @@ class ShareCounter
 
         $list = [];
 
-        // if (PHP_OS === "Darwin") {
-
-            $workerNum = static::$swooleServer->setting["worker_num"];
-            for ($i = 0; $i < $workerNum; $i++) {
-                $list[$i] = [];
-            }
-
-            for ($i = 0; $i < static::MAX_JOB_NUM; $i++) {
-                $atomic = static::$atomicCounterVector[$i];
-                if (!($atomic instanceof SwooleAtomic)) {
-                    break;
-                }
-
-                $row = static::fetchRow($i);
-                if ($row !== false) {
-                    $workerId = $row["worker_id"];
-                    $key = $row["key"];
-                    $list[$workerId][$key] = $atomic->get();
-                }
-            }
-
-        /*
-        } else {
-
+        $workerNum = static::$swooleServer->setting["worker_num"];
+        for ($i = 0; $i < $workerNum; $i++) {
+            $list[$i] = [];
         }
-        */
+
+        for ($i = 0; $i < static::MAX_JOB_NUM; $i++) {
+            $atomic = static::$atomicCounterVector[$i];
+            if (!($atomic instanceof SwooleAtomic)) {
+                break;
+            }
+
+            $row = static::fetchRow($i);
+            if ($row !== false) {
+                $workerId = $row["worker_id"];
+                $key = $row["key"];
+                $list[$workerId][$key] = $atomic->get();
+            }
+        }
 
         return $list;
-    }
-
-    protected static function apcuKey($key)
-    {
-        $workerId = static::$swooleServer->worker_id;
-        return sprintf("worker#%d#%s", $workerId, $key);
-    }
-
-    public static function apcuGet($key)
-    {
-        $key = static::apcuKey($key);
-        return apcu_fetch($key) ?:0;
     }
 
     public static function clear()

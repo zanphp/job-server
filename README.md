@@ -196,7 +196,7 @@ date format : s i G j n w
             "cron"  => "*/2 * * * * *",
             "method" => "POST",
             "header" => [['Content-type' => 'application/json']],
-            "body" => ""{"foo": "bar"}"",
+            "body" => "{\"foo\": \"bar\"}",
         ],
     ];
 ```
@@ -295,6 +295,15 @@ class MonitorController extends HttpController
 
 保证每个cron作业绑定到某个具体Worker;
 当前cron作业失败不会重试;
+
+
+#### Cron表达式parse参考
+
+```
+1. https://git.busybox.net/busybox/tree/miscutils/crond.c?h=1_25_stable
+2. http://crontab.org/
+3. man 5 crontab
+```
 
 ### 2. MqWorker
 
