@@ -3,6 +3,8 @@
 namespace Zan\Framework\Components\JobServer;
 
 
+use Zan\Framework\Foundation\Core\Config;
+
 final class JobMode
 {
     const CLI = "cli";
@@ -42,5 +44,33 @@ final class JobMode
         } else {
             self::$modes = [];
         }
+    }
+
+    public static function randomListenPort()
+    {
+        $port = Config::get("server.port", null);
+        if ($port) {
+            $newPort = self::getRandomPort() ?: $port;
+            Config::set("server.port", $newPort);
+        }
+    }
+
+    private static function getRandomPort()
+    {
+        $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+        $ok = socket_bind($socket, "0.0.0.0", 0);
+        if (!$ok) {
+            return false;
+        }
+        $ok = socket_listen($socket);
+        if (!$ok) {
+            return false;
+        }
+        $ok = socket_getsockname($socket, $addr, $port);
+        if (!$ok) {
+            return false;
+        }
+        socket_close($socket);
+        return $port;
     }
 }
