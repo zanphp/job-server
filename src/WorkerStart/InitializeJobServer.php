@@ -17,7 +17,6 @@ use Zan\Framework\Foundation\Core\ConfigLoader;
 use Zan\Framework\Foundation\Core\Path;
 use Zan\Framework\Foundation\Coroutine\Task;
 use Zan\Framework\Network\Http\RequestExceptionHandlerChain;
-use Zan\Framework\Sdk\Queue\NSQ\Queue;
 use swoole_server as SwooleServer;
 
 class InitializeJobServer implements Bootable
@@ -65,7 +64,7 @@ class InitializeJobServer implements Bootable
 
         $this->consoleJobMgr = Di::make(ConsoleJobManager::class, [$swServ], true);
         $this->cronJobMgr = Di::make(CronJobManager::class, [$swServ], true);
-        $this->mqJobMgr = Di::make(MqJobManager::class, [new Queue(), $swServ], true);
+        $this->mqJobMgr = Di::make(MqJobManager::class, [$swServ], true);
 
         if (JobMode::isCli()) {
             $this->bootConsoleWorker($swServ);

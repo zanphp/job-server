@@ -2,13 +2,12 @@
 
 namespace Zan\Framework\Components\JobServer;
 
-use Kdt\Iron\NSQ\Message\Msg;
-//use Kdt\Iron\NSQ\Piping\Node;
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
+use Zan\Framework\Components\Nsq\Message;
+use Zan\Framework\Components\Nsq\SQS;
 use Zan\Framework\Network\Server\Monitor\Worker;
-use Zan\Framework\Sdk\Queue\NSQ\Queue;
 use swoole_server as SwooleServer;
 
 class MqJobManager implements JobManager
@@ -18,8 +17,6 @@ class MqJobManager implements JobManager
     protected $isRunning = false;
 
     protected $swooleServer;
-
-    protected $msgQueue;
 
     /**
      * @var array jobKey => JobProcessor
@@ -31,14 +28,8 @@ class MqJobManager implements JobManager
      */
     protected $jobConfigs = [];
 
-    /**
-     * @var array jobKey => Node[]
-     */
-    // protected $nodes = [];
-
-    public function __construct(Queue $msgQueue, SwooleServer $swooleServer)
+    public function __construct(SwooleServer $swooleServer)
     {
-        $this->msgQueue = $msgQueue;
         $this->swooleServer = $swooleServer;
     }
 
@@ -47,7 +38,7 @@ class MqJobManager implements JobManager
         sys_echo("worker #{$this->swooleServer->worker_id} SUBMIT_MQ_JOB [jobKey=$dst]");
 
         $input = $this->jobEncode($raw);
-        yield $this->msgQueue->publish($dst, Msg::fromClient($input));
+        yield SQS::publish($dst, $input);
     }
 
     public function done(Job $job)
@@ -58,9 +49,9 @@ class MqJobManager implements JobManager
 
         sys_echo("worker #{$this->swooleServer->worker_id} DONE_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint]");
 
-        /* @var $msg Msg */
+        /* @var $msg Message */
         $msg = $job->extra;
-        $msg->done();
+        $msg->finish();
         $job->status = Job::DONE;
 
         JobMonitor::done($job);
@@ -74,10 +65,10 @@ class MqJobManager implements JobManager
             return false;
         }
 
-        /* @var $msg Msg */
+        /* @var $msg Message */
         $msg = $job->extra;
         $delay = 2 ** $job->attempts;
-        $msg->delay($delay);
+        $msg->requeue($delay);
         $job->status = Job::RETRY;
 
         sys_echo("worker #{$this->swooleServer->worker_id} DELAY_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, delay={$delay}s, reason=$reason]");
@@ -118,21 +109,21 @@ class MqJobManager implements JobManager
         return true;
     }
 
-    // TODO 问题
-    // 1. 必须接收到一条消息之后才能取消订阅,
-    // 2. 直接关闭连接,可能有数据没发送完
     public function unRegister($jobKey)
     {
-//        sys_echo("worker #{$this->swooleServer->worker_id} UN_REGISTER_MQ_JOB [jobKey=$jobKey]");
-//
-//        if (isset($this->nodes[$jobKey])) {
-//            foreach ($this->nodes[$jobKey] as $node) {
-//                /* @var $node Node */
-//                $node->close();
-//            }
-//            unset($this->nodes[$jobKey]);
-//            unset($this->processors[$jobKey]);
-//        }
+        sys_echo("worker #{$this->swooleServer->worker_id} UN_REGISTER_MQ_JOB [jobKey=$jobKey]");
+
+        if (isset($this->jobConfigs[$jobKey])) {
+            $topic = $this->jobConfigs[$jobKey]["topic"];
+            $channel = $this->jobConfigs[$jobKey]["channel"];
+            if (SQS::unSubscribe($topic, $channel)) {
+                unset($this->jobConfigs[$jobKey]);
+                unset($this->processors[$jobKey]);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function listJob()
@@ -164,12 +155,12 @@ class MqJobManager implements JobManager
         $channel = $this->jobConfigs[$jobKey]["channel"];
 
         $onReceive = $this->onReceive($jobKey, $jobProcessor);
-        yield $this->msgQueue->subscribe($topic, $channel, $onReceive, 0);
+        yield SQS::subscribe($topic, $channel, $onReceive);
     }
 
     public function onReceive($jobKey, JobProcessor $jobProcessor)
     {
-        return function(Msg $msg/*, Node $node = null*/) use($jobKey, $jobProcessor) {
+        return function(Message $msg) use($jobKey, $jobProcessor) {
 
             if (Worker::getInstance()->isDenyRequest()) {
                 $this->stop();
@@ -178,8 +169,6 @@ class MqJobManager implements JobManager
             if (!$this->isRunning) {
                 return;
             }
-
-            // $this->nodes[$jobKey] = $node;
 
             $timeout = $this->jobConfigs[$jobKey]["timeout"];
             $job = $this->jobDecode($jobKey, $msg);
@@ -193,9 +182,9 @@ class MqJobManager implements JobManager
         return json_encode($source, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 
-    protected function jobDecode($jobKey, Msg $msg)
+    protected function jobDecode($jobKey, Message $msg)
     {
-        $body = json_decode($msg->payload(), JSON_BIGINT_AS_STRING);
+        $body = json_decode($msg->getBody(), JSON_BIGINT_AS_STRING);
 
         $topic = $this->jobConfigs[$jobKey]["topic"];
         $channel = $this->jobConfigs[$jobKey]["channel"];
@@ -205,11 +194,11 @@ class MqJobManager implements JobManager
         $job = new Job;
 
         $job->jobKey        = $jobKey;
-        $job->fingerPrint   = "$workerId#$jobKey#$uri#$topic:$channel#" . $msg->id();
+        $job->fingerPrint   = "$workerId#$jobKey#$uri#$topic:$channel#" . $msg->getId();
         $job->body          = $body;
-        $job->raw           = $msg->payload();
-        $job->createTime    = $msg->timestamp() / 1e9;
-        $job->attempts      = $msg->attempts() ?: 1;
+        $job->raw           = $msg->getBody();
+        $job->createTime    = $msg->getTimestamp() / 1e9;
+        $job->attempts      = $msg->getAttempts() ?: 1;
         $job->status        = Job::INIT;
         $job->extra         = $msg;
 
