@@ -184,7 +184,10 @@ class MqJobManager implements JobManager
 
     protected function jobDecode($jobKey, Message $msg)
     {
-        $body = json_decode($msg->getBody(), JSON_BIGINT_AS_STRING);
+        $body = $msg->getBody();
+        if (preg_match('/^\s*[\[|\{].*[\]|\}\s*$]/', $body)) {
+            $body = json_decode($body, true, 512, JSON_BIGINT_AS_STRING);
+        }
 
         $topic = $this->jobConfigs[$jobKey]["topic"];
         $channel = $this->jobConfigs[$jobKey]["channel"];
