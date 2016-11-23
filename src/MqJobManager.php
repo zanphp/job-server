@@ -200,7 +200,7 @@ class MqJobManager implements JobManager
         $job->fingerPrint   = "$workerId#$jobKey#$uri#$topic:$channel#" . $msg->getId();
         $job->body          = $body;
         $job->raw           = $msg->getBody();
-        $job->createTime    = $msg->getTimestamp() / 1e9;
+        $job->createTime    = $msg->getTimestamp();
         $job->attempts      = $msg->getAttempts() ?: 1;
         $job->status        = Job::INIT;
         $job->extra         = $msg;
