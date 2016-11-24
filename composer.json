@@ -7,7 +7,7 @@
         },
         {
             "type": "git",
-            "url": "http://gitlab.qima-inc.com/php-lib/nsq-client"
+            "url": "git@gitlab.qima-inc.com:php-lib/nsq-client.git"
         },
         {
             "type": "git",
