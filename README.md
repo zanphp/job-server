@@ -315,7 +315,10 @@ config/env/nsq.php
 
 ```php
     return [
-        'lookupd' => 'http:nsq-dev.s.qima-inc.com:4161',
+        "lookup" => [
+            "http://nsq-dev.s.qima-inc.com:4161",
+            // "http://sqs-qa.s.qima-inc.com:4161"
+        ]
     ];
 ```
 
