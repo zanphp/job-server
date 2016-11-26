@@ -74,9 +74,9 @@ class JobMonitor
         }
 
         if ($job->attempts > 1) {
-            ShareCounter::decr("$job->jobKey#delay");
+            // ShareCounter::decr("$job->jobKey#delay");
         }
-        ShareCounter::incr("$job->jobKey#done");
+        // ShareCounter::incr("$job->jobKey#done");
     }
 
     public static function error(Job $job)
@@ -85,7 +85,7 @@ class JobMonitor
             return;
         }
 
-        ShareCounter::incr("$job->jobKey#error");
+        // ShareCounter::incr("$job->jobKey#error");
     }
 
     public static function delay(Job $job)
@@ -93,32 +93,32 @@ class JobMonitor
         if (!static::$swooleServer) {
             return;
         }
-        ShareCounter::incr("$job->jobKey#delay");
+        // ShareCounter::incr("$job->jobKey#delay");
     }
 
     protected static function getJobListByMode($jobMode)
     {
         $list = [];
 
-        $countStatistics = ShareCounter::statistic();
-
-        $workerNum = static::$swooleServer->setting["worker_num"];
-        for ($i = 0; $i < $workerNum; $i++) {
-
-            $subList = static::getShareList($i, $jobMode);
-
-            /** @noinspection PhpUndefinedVariableInspection */
-            $countStatistic = $countStatistics[$i];
-            foreach ($subList as $jobKey => &$value) {
-                foreach (["done", "error", "delay"] as $type) {
-                    $key = "$jobKey#$type";
-                    $value["count_$type"] = isset($countStatistic[$key]) ? $countStatistic[$key] : 0;
-                }
-            }
-            unset($value);
-
-            $list["worker#$i"] = $subList;
-        }
+//        $countStatistics = ShareCounter::statistic();
+//
+//        $workerNum = static::$swooleServer->setting["worker_num"];
+//        for ($i = 0; $i < $workerNum; $i++) {
+//
+//            $subList = static::getShareList($i, $jobMode);
+//
+//            /** @noinspection PhpUndefinedVariableInspection */
+//            $countStatistic = $countStatistics[$i];
+//            foreach ($subList as $jobKey => &$value) {
+//                foreach (["done", "error", "delay"] as $type) {
+//                    $key = "$jobKey#$type";
+//                    $value["count_$type"] = isset($countStatistic[$key]) ? $countStatistic[$key] : 0;
+//                }
+//            }
+//            unset($value);
+//
+//            $list["worker#$i"] = $subList;
+//        }
         return $list;
     }
 

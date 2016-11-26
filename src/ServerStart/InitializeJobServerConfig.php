@@ -4,7 +4,7 @@ namespace Zan\Framework\Components\JobServer\ServerStart;
 
 
 use Zan\Framework\Components\JobServer\JobMode;
-use Zan\Framework\Components\JobServer\Monitor\ShareCounter;
+// use Zan\Framework\Components\JobServer\Monitor\ShareCounter;
 use Zan\Framework\Contract\Network\Bootable;
 use Zan\Framework\Foundation\Core\Config;
 use Zan\Framework\Network\ServerManager\ServerRegisterInitiator;
@@ -20,7 +20,7 @@ class InitializeJobServerConfig implements Bootable
             $this->fixCookie();     // http server 依赖cookie配置
             $this->fixRoute();      // http server 依赖路由配置
 
-            ShareCounter::init($server->swooleServer);
+            // ShareCounter::init($server->swooleServer);
         }
 
         if (JobMode::isCli()) {
