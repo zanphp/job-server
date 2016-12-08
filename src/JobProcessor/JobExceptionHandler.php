@@ -10,6 +10,6 @@ class JobExceptionHandler implements ExceptionHandler
 {
     public function handle(\Exception $ex)
     {
-        return new Response($ex->getMessage(), $ex->getCode() ?: 500);
+        return new Response($ex->getMessage(), /*$ex->getCode() ?:*/ 500);
     }
 }
