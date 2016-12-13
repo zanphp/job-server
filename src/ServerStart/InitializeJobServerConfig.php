@@ -5,8 +5,10 @@ namespace Zan\Framework\Components\JobServer\ServerStart;
 
 use Zan\Framework\Components\JobServer\JobMode;
 // use Zan\Framework\Components\JobServer\Monitor\ShareCounter;
+use Zan\Framework\Components\JobServer\JobProcessor\JobTerminator;
 use Zan\Framework\Contract\Network\Bootable;
 use Zan\Framework\Foundation\Core\Config;
+use Zan\Framework\Network\Server\Middleware\MiddlewareConfig;
 use Zan\Framework\Network\ServerManager\ServerRegisterInitiator;
 use swoole_server as SwooleServer;
 
@@ -20,6 +22,7 @@ class InitializeJobServerConfig implements Bootable
             $this->fixCookie();     // http server 依赖cookie配置
             $this->fixRoute();      // http server 依赖路由配置
 
+            // 可能会引发coredump
             // ShareCounter::init($server->swooleServer);
         }
 
@@ -27,6 +30,30 @@ class InitializeJobServerConfig implements Bootable
             $this->fixConnectionPool();                     // 命令行模式连接池不初始化连接
             $this->fixWorkerNum($server->swooleServer, 1);  // 命令行模式强制只fork一个worker
         }
+
+        $this->registerTerminator();
+    }
+
+    protected function registerTerminator()
+    {
+        $middleware = MiddlewareConfig::getInstance();
+
+        $class = new \ReflectionClass(MiddlewareConfig::class);
+        $prop = $class->getProperty("config");
+        $prop->setAccessible(true);
+        $config = $prop->getValue($middleware);
+
+        if (!isset($config["group"])) {
+            $config["group"] = [];
+        }
+        if (!isset($config["match"])) {
+            $config["match"] = [];
+        }
+        $groupKey = "__job_server_defer";
+        $config["match"][] = [".*", $groupKey];
+        $config["group"][$groupKey] = [JobTerminator::class];
+
+        $prop->setValue($middleware, $config);
     }
 
     protected function disabledUnnecessaryComponents()

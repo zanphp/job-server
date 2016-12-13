@@ -1,26 +1,11 @@
 {
     "name": "php-lib/job-server",
-    "repositories": [
-        {
-            "type": "git",
-            "url": "http://gitlab.qima-inc.com/php-lib/zan.git"
-        },
-        {
-            "type": "git",
-            "url": "git@gitlab.qima-inc.com:php-lib/nsq-client.git"
-        },
-        {
-            "type": "git",
-            "url": "git@gitlab.qima-inc.com:php-3rd-lib/symfony-console.git"
-        },
-        {
-            "packagist": false
-        },
-        {
+    "repositories": {
+        "packagist": {
             "type": "composer",
-            "url": "https://packagist.phpcomposer.com"
+            "url": "http://packagist.qima-inc.com"
         }
-    ],
+    },
     "require": {
         "zanphp/zan": "dev-master",
         "php-lib/nsq-client": "dev-master",

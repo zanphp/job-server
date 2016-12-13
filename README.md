@@ -44,7 +44,8 @@ return [
 
 1. 作业任务放置根路径 ~src/Controller~
 2. 作业类需要继承~JobController~, cron,mqworker,cli三种作业模式下通用;
-3. 需要在方法结尾或异常处 调用$this->jobDone() 或 $this->jobError()方法来标注作业执行结果;
+3. 需要在方法结尾或异常处 调用 yield $this->jobDone() 或 yield $this->jobError()方法来标注作业执行结果;
+4. 可以不主动调用 yield $this->jobDone(), 但是仍需要返回 Response对象
 
 jobController示例:
 

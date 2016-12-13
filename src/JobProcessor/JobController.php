@@ -9,6 +9,9 @@ use Zan\Framework\Components\JobServer\MqJobManager;
 use Zan\Framework\Foundation\Container\Di;
 use Zan\Framework\Foundation\Domain\HttpController;
 use Zan\Framework\Network\Http\Response\Response;
+use Zan\Framework\Contract\Network\Request;
+use Zan\Framework\Utilities\DesignPattern\Context;
+
 
 class JobController extends HttpController
 {
@@ -16,6 +19,13 @@ class JobController extends HttpController
      * @var \Zan\Framework\Network\Http\Request\Request
      */
     protected $request;
+
+    public function __construct(Request $request, Context $context)
+    {
+        parent::__construct($request, $context);
+        $context->set("__job_mgr", $this->getJobManager());
+        $context->set("__job", $this->getJob());
+    }
 
     /**
      * @return Job|null

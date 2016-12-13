@@ -10,6 +10,8 @@ class JobExceptionHandler implements ExceptionHandler
 {
     public function handle(\Exception $ex)
     {
-        return new Response($ex->getMessage(), /*$ex->getCode() ?:*/ 500);
+        // 这里异常code不能采用$ex->getCode(),
+        // 因为$ex 的code 不一定是合法的http状态码, 如果不合法会在在Response中抛异常
+        return new Response($ex->getMessage(), 500);
     }
 }
