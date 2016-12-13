@@ -23,7 +23,9 @@ class JobTerminator implements RequestTerminator
         /* @var $job Job */
         $jobMgr = $context->get("__job_mgr");
         $job = $context->get("__job");
-        yield $jobMgr->done($job);
+        if ($jobMgr instanceof JobManager && $job instanceof Job) {
+            yield $jobMgr->done($job);
+        }
         yield null;
     }
 }
