@@ -51,8 +51,8 @@ class JobResponse extends \swoole_http_response
     }
 
     public function write($html) { }
-    public function sendfile($filename) { }
-    public function header($key, $value) { }
+    public function sendfile($filename, $offset = NULL) { }
+    public function header($key, $value, $ucwords = NULL) { }
     public function gzip($level = 1) { }
-    public function cookie($key, $value, $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false) {}
+    public function cookie($key, $value = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httponly = false) {}
 }
