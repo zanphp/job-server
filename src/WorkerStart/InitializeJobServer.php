@@ -79,7 +79,18 @@ class InitializeJobServer implements Bootable
         }
 
         if (JobMode::isOn(JobMode::MQ_WORKER)) {
-            $mqWorkerConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile(Path::getMqWorkerPath());
+            $o = getopt("", [ "mqfile:" ]);
+            if (isset($o["mqfile"])) {
+                $path = $o["mqfile"];
+                $file  = Path::getMqWorkerPath() . $o["mqfile"];
+                if (!is_readable($file)) {
+                    fprintf(STDERR, "$file not found\n");
+                    $swServ->shutdown();
+                }
+                $mqWorkerConf = ["$path" => require $file];
+            } else {
+                $mqWorkerConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile(Path::getMqWorkerPath());
+            }
             if ($mqWorkerConf) {
                 $this->bootMqWorker($swServ, $mqWorkerConf);
             }
