@@ -198,7 +198,8 @@ class InitializeJobServer implements Bootable
                 $processor = new HttpJobProcessor($mqConf["method"], $mqConf["uri"], $mqConf["header"], $mqConf["body"]);
                 
                 for ($i = 0; $i < $mqConf["coroutine_num"]; $i++) {
-                    $this->mqJobMgr->register("{$jobKey}_co_$i", $processor, $mqConf);
+                    // fix bug, 不同文件同名jobKey会产生覆盖, 这里将jobkey追加path
+                    $this->mqJobMgr->register("{$path}.{$jobKey}_co_$i", $processor, $mqConf);
                 }
             }
         }
