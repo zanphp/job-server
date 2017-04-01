@@ -55,23 +55,23 @@ class InitializeJobServer implements Bootable
     {
         pcntl_signal(SIGTERM, function() {});
     }
-    
+
     protected function init(SwooleServer $swServ)
     {
         sys_echo("worker #{$swServ->worker_id} job server bootstrap .....");
 
         $this->registerJobExceptionHandler();
 
-        $this->consoleJobMgr = Di::make(ConsoleJobManager::class, [$swServ], true);
-        $this->cronJobMgr = Di::make(CronJobManager::class, [$swServ], true);
-        $this->mqJobMgr = Di::make(MqJobManager::class, [$swServ], true);
-
         if (JobMode::isCli()) {
+            $this->consoleJobMgr = Di::make(ConsoleJobManager::class, [$swServ], true);
+
             $this->bootConsoleWorker($swServ);
             return;
         }
 
         if ((JobMode::isOn(JobMode::CRON))) {
+            $this->cronJobMgr = Di::make(CronJobManager::class, [$swServ], true);
+
             $cronConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile(Path::getCronPath());
             if ($cronConf) {
                 $this->bootCronWorker($swServ, $cronConf);
@@ -79,6 +79,8 @@ class InitializeJobServer implements Bootable
         }
 
         if (JobMode::isOn(JobMode::MQ_WORKER)) {
+            $this->mqJobMgr = Di::make(MqJobManager::class, [$swServ], true);
+
             $o = getopt("", [ "mqfile:" ]);
             if (isset($o["mqfile"])) {
                 $path = $o["mqfile"];
@@ -196,7 +198,7 @@ class InitializeJobServer implements Bootable
                 $mqConf = $mqConf + $options;
 
                 $processor = new HttpJobProcessor($mqConf["method"], $mqConf["uri"], $mqConf["header"], $mqConf["body"]);
-                
+
                 for ($i = 0; $i < $mqConf["coroutine_num"]; $i++) {
                     $this->mqJobMgr->register("{$jobKey}_co_$i", $processor, $mqConf);
                 }
