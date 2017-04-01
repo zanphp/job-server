@@ -47,7 +47,7 @@ class InitializeJobServer implements Bootable
 
             $this->init($swServer);
 
-            JobMonitor::start($swServer);
+            // JobMonitor::start($swServer);
         }
     }
 
