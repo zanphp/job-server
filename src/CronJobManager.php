@@ -98,7 +98,7 @@ class CronJobManager implements JobManager
         }
 
         if ($reason instanceof \Exception) {
-            $reason = $reason->getMessage();
+            $reason = get_class($reason) . "::" . $reason->getMessage();
         }
         sys_echo("worker #{$this->swooleServer->worker_id} ERROR_CRON_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
 

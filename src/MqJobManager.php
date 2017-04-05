@@ -81,7 +81,7 @@ class MqJobManager implements JobManager
     public function error(Job $job, $reason)
     {
         if ($reason instanceof \Exception) {
-            $reason = $reason->getMessage();
+            $reason = get_class($reason) . "::" . $reason->getMessage();
         }
         if ($job->attempts >= static::MAX_ATTEMPTS) {
             sys_echo("worker #{$this->swooleServer->worker_id} ERROR_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");

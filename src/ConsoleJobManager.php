@@ -58,7 +58,7 @@ class ConsoleJobManager implements JobManager
         }
 
         if ($reason instanceof \Exception) {
-            $reason = $reason->getMessage();
+            $reason = get_class($reason) . "::" . $reason->getMessage();
         }
         sys_echo("ERROR_CONSOLE_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
         $job->status = Job::ERROR;
