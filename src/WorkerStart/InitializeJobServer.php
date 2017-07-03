@@ -63,10 +63,18 @@ class InitializeJobServer implements Bootable
         $env = RunMode::get();
 
         $pathShare = "{$rootConfPath}share/$subDir";
-        $shareConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathShare);
+        if (is_dir($pathShare)) {
+            $shareConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathShare);
+        } else {
+            $shareConf = [];
+        }
 
         $pathEnv = "{$rootConfPath}$env/$subDir";
-        $envConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathEnv);
+        if (is_dir($pathEnv)) {
+            $envConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathEnv);
+        } else {
+            $envConf = [];
+        }
 
         return Arr::merge($shareConf, $envConf);
     }
