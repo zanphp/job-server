@@ -9,15 +9,16 @@ use Zan\Framework\Components\JobServer\CronJobManager;
 use Zan\Framework\Components\JobServer\JobMode;
 use Zan\Framework\Components\JobServer\JobProcessor\HttpJobProcessor;
 use Zan\Framework\Components\JobServer\JobProcessor\JobExceptionHandler;
-use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
 use Zan\Framework\Components\JobServer\MqJobManager;
 use Zan\Framework\Contract\Network\Bootable;
 use Zan\Framework\Foundation\Container\Di;
 use Zan\Framework\Foundation\Core\ConfigLoader;
 use Zan\Framework\Foundation\Core\Path;
+use Zan\Framework\Foundation\Core\RunMode;
 use Zan\Framework\Foundation\Coroutine\Task;
 use Zan\Framework\Network\Http\RequestExceptionHandlerChain;
 use swoole_server as SwooleServer;
+use Zan\Framework\Utilities\Types\Arr;
 
 class InitializeJobServer implements Bootable
 {
@@ -56,6 +57,18 @@ class InitializeJobServer implements Bootable
         pcntl_signal(SIGTERM, function() {});
     }
 
+    protected function loadConfig($type)
+    {
+        $env = RunMode::get();
+        $pathShare = Path::getConfigPath() . "share/$type";
+        $shareConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathShare);
+
+        $pathEnv = Path::getConfigPath() . "$env/$type";
+        $envConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathEnv);
+
+        return Arr::merge($shareConf, $envConf);
+    }
+
     protected function init(SwooleServer $swServ)
     {
         sys_echo("worker #{$swServ->worker_id} job server bootstrap .....");
@@ -72,7 +85,7 @@ class InitializeJobServer implements Bootable
         if ((JobMode::isOn(JobMode::CRON))) {
             $this->cronJobMgr = Di::make(CronJobManager::class, [$swServ], true);
 
-            $cronConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile(Path::getCronPath());
+            $cronConf = $this->loadConfig("cron");
             if ($cronConf) {
                 $this->bootCronWorker($swServ, $cronConf);
             }
@@ -91,7 +104,7 @@ class InitializeJobServer implements Bootable
                 }
                 $mqWorkerConf = ["$path" => require $file];
             } else {
-                $mqWorkerConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile(Path::getMqWorkerPath());
+                $mqWorkerConf = $this->loadConfig("mqworker");
             }
             if ($mqWorkerConf) {
                 $this->bootMqWorker($swServ, $mqWorkerConf);
