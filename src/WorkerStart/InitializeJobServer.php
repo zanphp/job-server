@@ -57,13 +57,15 @@ class InitializeJobServer implements Bootable
         pcntl_signal(SIGTERM, function() {});
     }
 
-    protected function loadConfig($type)
+    protected function loadConfig($subDir)
     {
+        $rootConfPath = Path::getConfigPath();
         $env = RunMode::get();
-        $pathShare = Path::getConfigPath() . "share/$type";
+
+        $pathShare = "{$rootConfPath}share/$subDir";
         $shareConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathShare);
 
-        $pathEnv = Path::getConfigPath() . "$env/$type";
+        $pathEnv = "{$rootConfPath}$env/$subDir";
         $envConf = ConfigLoader::getInstance()->loadDistinguishBetweenFolderAndFile($pathEnv);
 
         return Arr::merge($shareConf, $envConf);
