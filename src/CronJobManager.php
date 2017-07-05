@@ -202,7 +202,7 @@ class CronJobManager implements JobManager
     {
         if ($this->lastProcessTime) {
             $data = json_encode($this->lastProcessTime);
-            swoole_async_writefile($this->file, $data, function($file, $n) {}); // 注意4M文件体积限制
+//            swoole_async_writefile($this->file, $data, function($file, $n) {}); // 注意4M文件体积限制
         }
     }
 

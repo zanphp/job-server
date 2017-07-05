@@ -175,7 +175,7 @@ final class Crontab
             }
 
             // 处理可选的范围符号 '-'
-            if ($str[0] === "-" && $rangeRight < 0) {
+            if (isset($str[0]) && $str[0] === "-" && $rangeRight < 0) {
                 // 处理右侧范围
                 $str = substr($str, 1);
                 continue;
@@ -187,7 +187,7 @@ final class Crontab
             }
 
             // 修正step
-            if ($str[0] === "/") {
+            if (isset($str[0]) && $str[0] === "/") {
                 $step = static::strtol(substr($str, 1), $str);
             }
 
@@ -212,7 +212,7 @@ final class Crontab
             } while ($rangeLeft !== $rangeRight);
             
 
-            if ($str[0] === ",") {
+            if (isset($str[0]) && $str[0] === ",") {
                 $str = substr($str, 1);
                 $rangeLeft = -1;
                 $rangeRight = -1;
