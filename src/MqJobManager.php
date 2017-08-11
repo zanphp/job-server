@@ -170,6 +170,8 @@ class MqJobManager implements JobManager
                 return;
             }
 
+            $msg->disableAutoResponse();
+
             $timeout = $this->jobConfigs[$jobKey]["timeout"];
             $job = $this->jobDecode($jobKey, $msg);
             
