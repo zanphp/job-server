@@ -1,10 +1,6 @@
 {
     "name": "php-lib/job-server",
     "repositories": {
-        "packagist": {
-            "type": "composer",
-            "url": "http://packagist.qima-inc.com"
-        }
     },
     "require": {
         "zanphp/zan": "dev-master",
