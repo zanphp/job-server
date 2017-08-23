@@ -10,7 +10,7 @@ use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\JobProcessor\HttpJobProcessor;
 use Zan\Framework\Utilities\Types\Time;
-use swoole_server as SwooleServer;
+
 
 class ConsoleJobManager implements JobManager
 {
@@ -28,7 +28,7 @@ class ConsoleJobManager implements JobManager
      */
     protected $processors = [];
 
-    public function __construct(SwooleServer $swooleServer)
+    public function __construct(\swoole_server $swooleServer)
     {
         $this->swooleServer = $swooleServer;
     }

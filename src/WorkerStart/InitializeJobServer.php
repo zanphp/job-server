@@ -17,7 +17,6 @@ use Zan\Framework\Foundation\Core\Path;
 use Zan\Framework\Foundation\Core\RunMode;
 use Zan\Framework\Foundation\Coroutine\Task;
 use Zan\Framework\Network\Http\RequestExceptionHandlerChain;
-use swoole_server as SwooleServer;
 use Zan\Framework\Utilities\Types\Arr;
 
 class InitializeJobServer implements Bootable
@@ -43,18 +42,8 @@ class InitializeJobServer implements Bootable
     {
         if (JobMode::isOn()) {
             $swServer = $server->swooleServer;
-
-            // $this->fixMultiThreadSignalBug();
-
             $this->init($swServer);
-
-            // JobMonitor::start($swServer);
         }
-    }
-
-    protected function fixMultiThreadSignalBug()
-    {
-        pcntl_signal(SIGTERM, function() {});
     }
 
     protected function loadConfig($subDir)
@@ -79,7 +68,7 @@ class InitializeJobServer implements Bootable
         return Arr::merge($shareConf, $envConf);
     }
 
-    protected function init(SwooleServer $swServ)
+    protected function init(\swoole_server $swServ)
     {
         sys_echo("worker #{$swServ->worker_id} job server bootstrap .....");
 
@@ -141,7 +130,7 @@ class InitializeJobServer implements Bootable
         $exChain->init();
     }
 
-    protected function bootConsoleWorker(SwooleServer $swServ)
+    protected function bootConsoleWorker(\swoole_server $swServ)
     {
         global $argv;
 
@@ -169,14 +158,14 @@ class InitializeJobServer implements Bootable
         }
     }
 
-    protected function usage(SwooleServer $swServ)
+    protected function usage(\swoole_server $swServ)
     {
         ConsoleJobManager::usage();
         swoole_event_exit();
         $swServ->shutdown();
     }
 
-    protected function bootMqWorker(SwooleServer $swServ, array $conf)
+    protected function bootMqWorker(\swoole_server $swServ, array $conf)
     {
         sys_echo("worker #{$swServ->worker_id} message queue worker bootstrap .....");
 
@@ -190,7 +179,7 @@ class InitializeJobServer implements Bootable
         }
     }
 
-    protected function bootCronWorker(SwooleServer $swServ, array $conf)
+    protected function bootCronWorker(\swoole_server $swServ, array $conf)
     {
         sys_echo("worker #{$swServ->worker_id} crontab worker bootstrap .....");
 
@@ -232,7 +221,7 @@ class InitializeJobServer implements Bootable
         yield $this->mqJobMgr->start();
     }
 
-    protected function doBootCronWorker(SwooleServer $swServ, array $conf)
+    protected function doBootCronWorker(\swoole_server $swServ, array $conf)
     {
 
         $mod = $swServ->setting["worker_num"];
