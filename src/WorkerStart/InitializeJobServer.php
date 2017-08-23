@@ -81,15 +81,6 @@ class InitializeJobServer implements Bootable
             return;
         }
 
-        if ((JobMode::isOn(JobMode::CRON))) {
-            $this->cronJobMgr = Di::make(CronJobManager::class, [$swServ], true);
-
-            $cronConf = $this->loadConfig("cron");
-            if ($cronConf) {
-                $this->bootCronWorker($swServ, $cronConf);
-            }
-        }
-
         if (JobMode::isOn(JobMode::MQ_WORKER)) {
             $this->mqJobMgr = Di::make(MqJobManager::class, [$swServ], true);
 
@@ -107,6 +98,15 @@ class InitializeJobServer implements Bootable
             }
             if ($mqWorkerConf) {
                 $this->bootMqWorker($swServ, $mqWorkerConf);
+            }
+        }
+
+        if ((JobMode::isOn(JobMode::CRON))) {
+            $this->cronJobMgr = Di::make(CronJobManager::class, [$swServ], true);
+
+            $cronConf = $this->loadConfig("cron");
+            if ($cronConf) {
+                $this->bootCronWorker($swServ, $cronConf);
             }
         }
     }
