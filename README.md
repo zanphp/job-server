@@ -1,6 +1,6 @@
 # Zan Job Server
 
-## [>> Link To Demo](http://gitlab.qima-inc.com/php-lib/job-server-demo)
+## [>> Link To Demo](https://github.com/zanphp/job-server-demo)
 
 ## 1. 简介
 
