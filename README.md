@@ -14,9 +14,9 @@
 
 ## 2. 快速开始
 
-### 1. 配置composer.json, 加入 php-lib/job-server 依赖, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/blob/master/composer.json#L71)
+### 1. 配置composer.json, 加入 php-lib/job-server 依赖, [*参考*](https://github.com/zanphp/job-server-demo/blob/master/composer.json#L12)
 
-### 2. 配置 ServerStart 与 WorkerStart, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/tree/master/init)
+### 2. 配置 ServerStart 与 WorkerStart, [*参考*](https://github.com/zanphp/job-server-demo/tree/master/init)
 
 ./init/ServerStart/.config.php
 
@@ -43,7 +43,7 @@ return [
 ];
 ```
 
-### 3. 加入作业, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/tree/master/src/Controller/Job)
+### 3. 加入作业, [*参考*](https://github.com/zanphp/job-server-demo/tree/master/src/Controller/Job)
 
 1. 作业任务放置根路径 ~src/Controller~
 2. 作业类需要继承~JobController~, cron,mqworker,cli三种作业模式下通用;
@@ -68,7 +68,7 @@ jobController示例:
     }
 ```
 
-### 4. 配置作业, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/tree/master/resource/config/share)
+### 4. 配置作业, [*参考*](https://github.com/zanphp/job-server-demo/tree/master/resource/config/share)
 
 #### 配置路径结构
 
@@ -230,7 +230,7 @@ date format : s i G j n w
 ```
 
 
-### 5. 启动, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/blob/master/bin/jobserv)
+### 5. 启动, [*参考*](https://github.com/zanphp/job-server-demo/blob/master/bin/jobserv)
 
 在bin目录新建一个启动脚本, 配置环境变量;
 
