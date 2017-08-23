@@ -3,7 +3,7 @@
 namespace Zan\Framework\Components\JobServer;
 
 
-use Zan\Framework\Foundation\Core\Config;
+use ZanPHP\Config\Config;
 
 final class JobMode
 {

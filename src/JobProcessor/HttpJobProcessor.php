@@ -6,8 +6,8 @@ namespace Zan\Framework\Components\JobServer\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Job;
-use Zan\Framework\Foundation\Core\Config;
 use Zan\Framework\Network\Http\RequestHandler;
+use ZanPHP\Config\Config;
 
 class HttpJobProcessor implements JobProcessor
 {

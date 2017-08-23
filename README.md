@@ -261,37 +261,6 @@ $server = $app->createHttpServer();
 $server->start();
 ```
 
-### 6. 监控
-
-如果worker的载体为http服务器, 可添加监控的Controller, 通过Web请求响应监控任务执行状态, [*参考*](http://gitlab.qima-inc.com/php-lib/job-server-demo/blob/master/src/Controller/Job/MonitorController.php)
-
-```php
-<?php
-
-namespace Zan\Framework\Components\JobServer\Controller\Job;
-
-use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
-use Zan\Framework\Foundation\Domain\HttpController;
-use Zan\Framework\Network\Http\Response\JsonResponse;
-
-class MonitorController extends HttpController
-{
-    // 当前作业列表信息
-    public function jobList()
-    {
-        $ret = (yield JobMonitor::getJobList());
-        yield new JsonResponse($ret);
-    }
-
-    // 当前作业连接池信息
-    public function poolStat()
-    {
-        $status = (yield JobMonitor::getConnectionPoolStatus());
-        yield new JsonResponse($status);
-    }
-}
-```
-
 
 ## 其他
 

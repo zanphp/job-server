@@ -5,13 +5,10 @@ namespace Zan\Framework\Components\JobServer;
 
 use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
-use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
 use Zan\Framework\Foundation\Application;
-use Zan\Framework\Foundation\Core\Debug;
 use Zan\Framework\Network\Server\Monitor\Worker;
 use Zan\Framework\Network\Server\Timer\Timer;
 use Zan\Framework\Utilities\Types\Time;
-use swoole_server as SwooleServer;
 
 class CronJobManager implements JobManager
 {
@@ -41,7 +38,7 @@ class CronJobManager implements JobManager
      */
     protected $jobProcessors = [];
 
-    public function __construct(SwooleServer $swooleServer)
+    public function __construct(\swoole_server $swooleServer)
     {
         $this->swooleServer = $swooleServer;
         $this->init();
@@ -85,9 +82,6 @@ class CronJobManager implements JobManager
         sys_echo("worker #{$this->swooleServer->worker_id} DONE_CRON_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint]");
 
         $job->status = Job::DONE;
-
-        JobMonitor::done($job);
-
         return true;
     }
 
@@ -103,9 +97,6 @@ class CronJobManager implements JobManager
         sys_echo("worker #{$this->swooleServer->worker_id} ERROR_CRON_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
 
         $job->status = Job::ERROR;
-
-        JobMonitor::error($job);
-
         return true;
     }
 

@@ -4,30 +4,25 @@ namespace Zan\Framework\Components\JobServer\ServerStart;
 
 
 use Zan\Framework\Components\JobServer\JobMode;
-// use Zan\Framework\Components\JobServer\Monitor\ShareCounter;
 use Zan\Framework\Components\JobServer\JobProcessor\JobTerminator;
 use Zan\Framework\Contract\Network\Bootable;
-use Zan\Framework\Foundation\Core\Config;
 use Zan\Framework\Network\Server\Middleware\MiddlewareConfig;
 use Zan\Framework\Network\ServerManager\ServerRegisterInitiator;
-use swoole_server as SwooleServer;
+use ZanPHP\Config\Config;
 
 class InitializeJobServerConfig implements Bootable
 {
     public function bootstrap($server)
     {
         if (JobMode::isOn()) {
-            $this->disabledUnnecessaryComponents();
-            $this->fixMonitor();
-            $this->fixCookie();     // http server 依赖cookie配置
-            $this->fixRoute();      // http server 依赖路由配置
-
-            // 可能会引发coredump
-            // ShareCounter::init($server->swooleServer);
+            ServerRegisterInitiator::getInstance()->disableRegister();
+            Config::set("server.monitor.max_concurrency", PHP_INT_MAX);
+            $this->fixCookie();
+            $this->fixRoute();
         }
 
         if (JobMode::isCli()) {
-            $this->fixConnectionPool();                     // 命令行模式连接池不初始化连接
+            $this->fixConnectionPool();                               // 命令行模式连接池不初始化连接
             $this->fixWorkerNum($server->swooleServer, 1);  // 命令行模式强制只fork一个worker
         }
 
@@ -56,13 +51,6 @@ class InitializeJobServerConfig implements Bootable
         $prop->setValue($middleware, $config);
     }
 
-    protected function disabledUnnecessaryComponents()
-    {
-        // 如果跑在TcpServer下,需要关闭服务注册
-        ServerRegisterInitiator::getInstance()->disableRegister();
-        // ... and so on
-    }
-    
     protected function fixConnectionPool()
     {
         $connectionList = Config::get("connection");
@@ -100,15 +88,10 @@ class InitializeJobServerConfig implements Bootable
         Config::set("server.request_timeout", $timeout);
     }
 
-    protected function fixWorkerNum(SwooleServer $swServ, $workerNum = 1)
+    protected function fixWorkerNum(\swoole_server $swServ, $workerNum = 1)
     {
         Config::set("server.config.worker_num", $workerNum);
         $swServ->set(["worker_num" => $workerNum]);
-    }
-
-    protected function fixMonitor()
-    {
-        Config::set("server.monitor.max_concurrency", PHP_INT_MAX);
     }
 
     protected function fixCookie()

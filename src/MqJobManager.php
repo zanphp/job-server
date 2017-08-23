@@ -4,11 +4,9 @@ namespace Zan\Framework\Components\JobServer;
 
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
-use Zan\Framework\Components\JobServer\Monitor\JobMonitor;
 use Zan\Framework\Components\Nsq\Message;
 use Zan\Framework\Components\Nsq\SQS;
 use Zan\Framework\Network\Server\Monitor\Worker;
-use swoole_server as SwooleServer;
 
 class MqJobManager implements JobManager
 {
@@ -16,6 +14,9 @@ class MqJobManager implements JobManager
 
     protected $isRunning = false;
 
+    /**
+     * @var \swoole_server
+     */
     protected $swooleServer;
 
     /**
@@ -28,7 +29,7 @@ class MqJobManager implements JobManager
      */
     protected $jobConfigs = [];
 
-    public function __construct(SwooleServer $swooleServer)
+    public function __construct(\swoole_server $swooleServer)
     {
         $this->swooleServer = $swooleServer;
     }
@@ -53,9 +54,6 @@ class MqJobManager implements JobManager
         $msg = $job->extra;
         $msg->finish();
         $job->status = Job::DONE;
-
-        JobMonitor::done($job);
-
         return true;
     }
 
@@ -72,9 +70,6 @@ class MqJobManager implements JobManager
         $job->status = Job::RETRY;
 
         sys_echo("worker #{$this->swooleServer->worker_id} DELAY_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, delay={$delay}s, reason=$reason]");
-
-        JobMonitor::delay($job);
-
         return true;
     }
 
@@ -89,9 +84,6 @@ class MqJobManager implements JobManager
         } else {
             $this->delay($job, $reason);
         }
-
-        JobMonitor::error($job);
-
         return true;
     }
 
