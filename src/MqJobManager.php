@@ -6,6 +6,7 @@ use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
 use Zan\Framework\Components\Nsq\Message;
 use Zan\Framework\Components\Nsq\SQS;
+use Zan\Framework\Foundation\Core\Config;
 use Zan\Framework\Network\Server\Monitor\Worker;
 
 class MqJobManager implements JobManager
@@ -78,7 +79,12 @@ class MqJobManager implements JobManager
         if ($reason instanceof \Exception) {
             $reason = get_class($reason) . "::" . $reason->getMessage();
         }
-        if ($job->attempts >= static::MAX_ATTEMPTS) {
+        $maxAttempts = static::MAX_ATTEMPTS;
+        $configAttempts = Config::get("mqworker.message.max_attempts");
+        if (is_int($configAttempts)) {
+            $maxAttempts = $configAttempts;
+        }
+        if ($job->attempts >= $maxAttempts) {
             sys_echo("worker #{$this->swooleServer->worker_id} ERROR_MQ_JOB [jobKey=$job->jobKey, fingerPrint=$job->fingerPrint, attempts=$job->attempts, reason=$reason]");
             $this->done($job);
         } else {
