@@ -4,8 +4,10 @@ namespace Zan\Framework\Components\JobServer;
 
 use Zan\Framework\Components\JobServer\Contract\JobProcessor;
 use Zan\Framework\Components\JobServer\Contract\JobManager;
-use Zan\Framework\Components\Nsq\Message;
-use Zan\Framework\Components\Nsq\SQS;
+//use Zan\Framework\Components\Nsq\Message;
+//use Zan\Framework\Components\Nsq\SQS;
+use ZanPHP\NSQ\Message;
+use ZanPHP\NSQ\NSQ as SQS;
 use Zan\Framework\Foundation\Core\Config;
 use Zan\Framework\Network\Server\Monitor\Worker;
 
