@@ -50,7 +50,7 @@ final class Crontab
             $this->minutes[$min] &&
             $this->hours[$hour] &&
             ($this->days[$day] || $this->dayOfWeeks[$dow]) &&
-            $this->minutes[$mon];
+            $this->months[$mon];
     }
 
     /**
