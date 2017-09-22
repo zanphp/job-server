@@ -4,7 +4,7 @@
     },
     "require": {
         "zanphp/zan": "dev-master",
-        "php-lib/nsq-client": "dev-master",
+        "zanphp/nsq-client": "dev-master",
         "symfony/console": "3.1"
     },
     "autoload": {
